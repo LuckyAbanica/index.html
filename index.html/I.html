@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Question Choice</title>
+<style>
+  /* Global and body styles */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    color: white;
+    overflow: hidden; /* prevent scroll from confetti */
+  }
+  /* Container for question and buttons */
+  .container {
+    background: rgba(0, 0, 0, 0.45);
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    max-width: 350px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    height: 200px;
+    box-sizing: border-box;
+  }
+  /* Question text */
+  .question {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    user-select: none;
+  }
+  /* Buttons container */
+  .buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    height: 50px;
+  }
+  /* Buttons common style */
+  button {
+    width: 120px;
+    height: 50px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: white;
+    font-weight: 600;
+    user-select: none;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    line-height: 1.2;
+  }
+  button:focus {
+    outline: 3px solid #f5a623;
+    outline-offset: 2px;
+  }
+  button:active {
+    transform: scale(0.95);
+  }
+  /* Yes button - fixed on left */
+  .yes {
+    background-color: #28a745;
+    box-shadow: 0 4px 12px #28a745cc;
+    position: relative;
+  }
+  .yes:hover {
+    background-color: #218838;
+  }
+  /* No button - absolutely positioned initially on right, moves on click */
+  .no {
+    background-color: #dc3545;
+    box-shadow: 0 4px 12px #dc3545cc;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  .no:hover {
+    background-color: #c82333;
+  }
+  /* Popup message style */
+  .popup-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(20px);
+    background: #28a745;
+    color: white;
+    padding: 1.2rem 2rem 1.4rem 2rem;
+    border-radius: 16px;
+    font-size: 2rem;
+    font-weight: 800;
+    box-shadow:
+      0 0 8px #28a745aa,
+      0 0 15px #28a745bb,
+      0 0 30px #28a745cc;
+    opacity: 0;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 1000;
+    overflow: visible;
+  }
+  .popup-message.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+    pointer-events: auto;
+    animation: bounceIn 0.6s ease forwards;
+  }
+  @keyframes bounceIn {
+    0% {
+      transform: translate(-50%, -50%) translateY(30px);
+      opacity: 0;
+    }
+    50% {
+      transform: translate(-50%, -50%) translateY(-10px);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) translateY(0);
+      opacity: 1;
+    }
+  }
+  /* Heart icon styling */
+  .heart {
+    color: #ff3864;
+    margin-left: 0.5rem;
+    animation: heartbeat 1s infinite;
+    display: inline-block;
+  }
+  @keyframes heartbeat {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.3);
+    }
+  }
+  /* Confetti container */
+  .confetti-container {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 80px;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 999;
+  }
+  /* Confetti pieces */
+  .confetti {
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    background-color: red;
+    opacity: 0;
+    border-radius: 2px;
+    animation-fill-mode: forwards;
+  }
+  /* Different colors for confetti pieces */
+  .confetti:nth-child(1) { background: #e74c3c; }
+  .confetti:nth-child(2) { background: #f39c12; }
+  .confetti:nth-child(3) { background: #2ecc71; }
+  .confetti:nth-child(4) { background: #3498db; }
+  .confetti:nth-child(5) { background: #9b59b6; }
+  .confetti:nth-child(6) { background: #e67e22; }
+  .confetti:nth-child(7) { background: #1abc9c; }
+  .confetti:nth-child(8) { background: #e84393; }
+  /* Confetti animations */
+  @keyframes confettiFall {
+    0% {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-60px) rotate(360deg);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container" role="main" aria-labelledby="question-label">
+    <div id="question-label" class="question">Pogi ko no?</div>
+    <div class="buttons" role="group" aria-label="Choose Yes or No">
+      <button class="yes" type="button" onclick="showPopup()">Yes</button>
+      <button class="no" type="button" onclick="moveNo()">No</button>
+    </div>
+    <div id="popup" class="popup-message" role="alert" aria-live="assertive">
+      Sabi na ehh <span class="heart">❤️</span> :)
+      <div id="confetti" class="confetti-container"></div>
+    </div>
+  </div>
+
+  <script>
+    const noButton = document.querySelector('.no');
+    const container = document.querySelector('.container');
+    const popup = document.getElementById('popup');
+    const confettiContainer = document.getElementById('confetti');
+    let lastPos = { right: 0, top: 0 };
+
+    function showPopup() {
+      popup.classList.add('show');
+      createConfetti();
+      setTimeout(() => {
+        popup.classList.remove('show');
+        clearConfetti();
+      }, 3000);
+    }
+
+    function moveNo() {
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const buttonWidth = noButton.offsetWidth;
+      const buttonHeight = noButton.offsetHeight;
+
+      function distance(x1, y1, x2, y2) {
+        return Math.hypot(x2 - x1, y2 - y1);
+      }
+
+      let currentLeft = containerWidth - buttonWidth - lastPos.right;
+      let currentTop = lastPos.top;
+      const minDistance = 100;
+      let attempts = 0;
+      let newLeft, newTop;
+
+      do {
+        newLeft = Math.random() * (containerWidth - buttonWidth);
+        newTop = 40 + Math.random() * (containerHeight - buttonHeight - 40);
+        attempts++;
+        if (attempts > 100) break;
+      } while (distance(newLeft, newTop, currentLeft, currentTop) < minDistance);
+
+      const newRight = containerWidth - buttonWidth - newLeft;
+
+      noButton.style.right = newRight + 'px';
+      noButton.style.top = newTop + 'px';
+
+      lastPos = { right: newRight, top: newTop };
+
+      popup.classList.remove('show');
+      clearConfetti();
+    }
+
+    function createConfetti() {
+      clearConfetti();
+      const colors = ['#e74c3c', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', '#e67e22', '#1abc9c', '#e84393'];
+      for (let i = 0; i < 15; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.backgroundColor = colors[i % colors.length];
+        confetti.style.left = Math.random() * 100 + 'px';
+        confetti.style.top = 60 + Math.random() * 10 + 'px';
+        confetti.style.width = (Math.random() * 6 + 6) + 'px';
+        confetti.style.height = (Math.random() * 10 + 6) + 'px';
+        confetti.style.opacity = 1;
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        confetti.style.animation = `confettiFall 1.5s ease forwards`;
+        confetti.style.animationDelay = (i * 0.1) + 's';
+        confettiContainer.appendChild(confetti);
+      }
+    }
+
+    function clearConfetti() {
+      while(confettiContainer.firstChild) {
+        confettiContainer.removeChild(confettiContainer.firstChild);
+      }
+    }
+  </script>
+</body>
+</html>
+
